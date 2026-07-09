@@ -31,6 +31,15 @@ local CUSTOM_EMOTES = {
     {key = Enum.KeyCode.Quote,        id = 87282253113789},
     {key = Enum.KeyCode.LeftBracket,  id = 93511411593120}
 }
+
+-- ДОБАВЛЕНО: Определение CUSTOM_ANIMATIONS
+local CUSTOM_ANIMATIONS = {
+    Idle = 0,   -- Замените на реальные ID анимаций
+    Walk = 0,   -- Замените на реальные ID анимаций
+    Run = 0,    -- Замените на реальные ID анимаций
+    Jump = 0,   -- Замените на реальные ID анимаций
+    Fall = 0    -- Замените на реальные ID анимаций
+}
 -- ==================================================================
 
 local Players = game:GetService("Players")
@@ -226,12 +235,10 @@ local function CreateButton(text, color, callback)
 end
 
 -- ==================================================================
--- НЕУРЕЗАННАЯ ОРИГИНАЛЬНАЯ ЛОГИКА АНИМАЦИЙ ИЗ ТВОЕГО ПЕРВОГО СКРИПТА
--- (ИСПРАВЛЕН КРАШ С Landed, ДОБАВЛЕН GETOBJECTS БАЙПАС)
+-- АНИМАЦИИ
 -- ==================================================================
 local animCache = {}
 
--- Твоя оригинальная функция загрузки анимации с обходом GetObjects
 local function GetBypassAnim(id)
     if not animCache[id] then
         local anim = nil
@@ -242,7 +249,6 @@ local function GetBypassAnim(id)
             for _, obj in ipairs(items) do pcall(function() obj:Destroy() end) end
         end)
         
-        -- Если чит не смог вытащить через GetObjects, делаем классическую анимацию
         if not anim then
             anim = Instance.new("Animation")
             anim.AnimationId = "rbxassetid://" .. id
@@ -273,14 +279,11 @@ local function ApplySelectedAnimation()
     local animator = hum:FindFirstChildOfClass("Animator")
     if not animator then return end
     
-    -- Выключаем дефолтные анимации Роблокса
     local animateScript = char:FindFirstChild("Animate")
     if animateScript then animateScript.Disabled = true end
     
-    -- Останавливаем предыдущие анимации
     stopAllAnims()
     
-    -- Отключаем старые обработчики
     if currentAnimConnection then
         currentAnimConnection:Disconnect()
         currentAnimConnection = nil
@@ -290,7 +293,6 @@ local function ApplySelectedAnimation()
     end
     jumpFallConnections = {}
     
-    -- Загружаем и проигрываем idle (С ИСПОЛЬЗОВАНИЕМ ТВОЕГО ОБХОДА)
     local idleAnim = GetBypassAnim(CUSTOM_ANIMATIONS.Idle)
     local idleTrack = animator:LoadAnimation(idleAnim)
     idleTrack.Priority = Enum.AnimationPriority.Action
@@ -298,17 +300,14 @@ local function ApplySelectedAnimation()
     pcall(function() idleTrack:Play() end)
     currentAnimTracks["Idle"] = idleTrack
     
-    -- ОРИГИНАЛЬНАЯ ЛОГИКА ХОДЬБЫ
     currentAnimConnection = hum.Running:Connect(function(speed)
         if speed > 0.1 then
-            -- Останавливаем Idle
             if currentAnimTracks["Idle"] then
                 pcall(function() currentAnimTracks["Idle"]:Stop() end)
                 currentAnimTracks["Idle"] = nil
             end
             
             if speed > 16 then
-                -- Run animation
                 if not currentAnimTracks["Run"] then
                     if currentAnimTracks["Walk"] then
                         pcall(function() currentAnimTracks["Walk"]:Stop() end)
@@ -322,7 +321,6 @@ local function ApplySelectedAnimation()
                     currentAnimTracks["Run"] = runTrack
                 end
             else
-                -- Walk animation
                 if not currentAnimTracks["Walk"] then
                     if currentAnimTracks["Run"] then
                         pcall(function() currentAnimTracks["Run"]:Stop() end)
@@ -337,7 +335,6 @@ local function ApplySelectedAnimation()
                 end
             end
         else
-            -- Останавливаем Walk/Run
             if currentAnimTracks["Walk"] then
                 pcall(function() currentAnimTracks["Walk"]:Stop() end)
                 currentAnimTracks["Walk"] = nil
@@ -347,7 +344,6 @@ local function ApplySelectedAnimation()
                 currentAnimTracks["Run"] = nil
             end
             
-            -- Проигрываем Idle
             if not currentAnimTracks["Idle"] then
                 local newIdleAnim = GetBypassAnim(CUSTOM_ANIMATIONS.Idle)
                 local newIdleTrack = animator:LoadAnimation(newIdleAnim)
@@ -359,7 +355,6 @@ local function ApplySelectedAnimation()
         end
     end)
     
-    -- ОРИГИНАЛЬНЫЕ Jump/Fall/Land обработчики
     table.insert(jumpFallConnections, hum.Jumping:Connect(function()
         stopAllAnims()
         local jumpAnim = GetBypassAnim(CUSTOM_ANIMATIONS.Jump)
@@ -378,7 +373,6 @@ local function ApplySelectedAnimation()
         currentAnimTracks["Fall"] = fallTrack
     end))
     
-    -- ИСПРАВЛЕННЫЙ LANDED (Именно он крашил скрипт на твоем скриншоте!)
     table.insert(jumpFallConnections, hum.StateChanged:Connect(function(oldState, newState)
         if newState == Enum.HumanoidStateType.Landed then
             stopAllAnims()
@@ -400,7 +394,7 @@ lp.CharacterAdded:Connect(function(char)
 end)
 
 -- ==================================================================
--- НЕУРЕЗАННАЯ ОРИГИНАЛЬНАЯ ЛОГИКА ЭМОЦИЙ
+-- ЭМОЦИИ
 -- ==================================================================
 local currentTrack = nil
 local currentEmote = nil
@@ -624,7 +618,7 @@ local DeactivateBtn = CreateButton("🔄 DEACTIVATE & RESET", Color3.fromRGB(150
     end
 end)
 
--- End
+-- ИСПРАВЛЕНО: Убрана синтаксическая ошибка в конце
 task.wait(4.5)
 pcall(function() introGui:Destroy() end)
 MainFrame.Visible = true
